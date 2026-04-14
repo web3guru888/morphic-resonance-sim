@@ -1,18 +1,19 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[twoside,11pt]{article}
 
-% -- Packages ----------------------------------------------------------------
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
-\usepackage[margin=2.5cm]{geometry}
-\usepackage{amsmath,amssymb,amsthm}
-\usepackage{graphicx}
+% -- Load amsthm BEFORE jmlr2e so proof environment is available to renew ----
+\usepackage{amsmath,amsthm}
+
+% -- JMLR style (loads natbib, graphicx, amssymb, epsfig, hyperref) ----------
+% Use [preprint] for arXiv / submission; remove for camera-ready
+\usepackage[preprint]{jmlr2e}
+\usepackage{lastpage}          % for \pageref{LastPage} in heading
+
+% -- Additional packages (not loaded by jmlr2e) ------------------------------
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{multirow}
 \usepackage{xcolor}
 \usepackage{listings}
-\usepackage{hyperref}
 \usepackage{microtype}
 \usepackage{parskip}
 \usepackage{caption}
@@ -21,12 +22,11 @@
 \usepackage{algpseudocode}
 \usepackage{enumitem}
 \usepackage{url}
-\usepackage{setspace}          % double-spacing for submission
-\usepackage[authoryear,round]{natbib}   % APA-style author–year citations
 \usepackage{tikz}
 \usetikzlibrary{positioning,shapes.geometric,arrows.meta}
 
-% -- Hyperref setup -----------------------------------------------------------
+% -- Hyperref overrides (jmlr2e loads hyperref with colorlinks=false) ---------
+% Override to colour links in PDF; remove for camera-ready B&W
 \hypersetup{
     colorlinks=true,
     linkcolor=blue!70!black,
@@ -87,29 +87,32 @@
 % -- Math helpers -------------------------------------------------------------
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
-\newtheorem{definition}{Definition}
+% Note: \newtheorem{definition} already provided by jmlr2e
 
-% -- Title block --------------------------------------------------------------
-\title{\textbf{Collective Habit as Infrastructure:\\
+% -- JMLR heading macros (vol, year, pages, submitted, published, id, author)
+% Leave submitted/published/id blank for initial submission; fill in after acceptance
+\jmlrheading{1}{2026}{1-\pageref{LastPage}}{4/26}{}{}{Dey}
+\ShortHeadings{Computational Model of Morphic Resonance via MARL}{Dey}
+\firstpageno{1}
+
+% -- Title, author, editor ---------------------------------------------------
+\title{Collective Habit as Infrastructure:\\
        A Computational Model of Morphic Resonance\\
-       via Multi-Agent Reinforcement Learning}}
+       via Multi-Agent Reinforcement Learning}
 
-\author{Robin Dey \\
-        \textit{BUTTERS / morphic-resonance-sim Project} \\
-        \href{mailto:robin@vbrl.ai}{\texttt{robin@vbrl.ai}} \\
-        \href{https://github.com/web3guru888/morphic-resonance-sim}%
-             {\texttt{github.com/web3guru888/morphic-resonance-sim}}}
+\author{\name Robin Dey \email robin@vbrl.ai \\
+        \addr VBRL Holdings \\
+        Thailand \\
+        \url{https://github.com/web3guru888/morphic-resonance-sim}}
 
-\date{April 2026 \quad [Submission draft]}
+\editor{To be assigned}
 
 % =============================================================================
 \begin{document}
-\doublespacing          % ALife submission requirement
 
 \maketitle
 
-% -- Abstract -----------------------------------------------------------------
-\begin{abstract}
+\begin{abstract}%  <- trailing % required by jmlr2e for backward compatibility
 We present a computational model of Rupert Sheldrake's morphic resonance
 hypothesis, implemented as a multi-agent reinforcement learning simulation of
 the McDougall rat maze experiment (1920--1954).  The simulation places
@@ -139,14 +142,14 @@ also constitutes a practical design pattern for cold-start mitigation and
 stigmergic coordination in multi-agent AI systems, occupying a specific gap
 between experience-sharing and weight-sharing in the federated RL literature.
 
-\vspace{0.5em}
-\noindent\textbf{Keywords:} morphic resonance, Q-learning, multi-agent
-systems, collective memory, displaced control, stigmergy, knowledge transfer,
-cold start problem, federated reinforcement learning
 \end{abstract}
 
-\tableofcontents
-\newpage
+\begin{keywords}
+  morphic resonance, Q-learning, multi-agent systems, collective memory,
+  displaced control, stigmergy, knowledge transfer, cold start,
+  federated reinforcement learning, temporal mean-field RL,
+  hyperstructures, biological precedent, scaling laws
+\end{keywords}
 
 % =============================================================================
 \section{Introduction}
@@ -1734,10 +1737,25 @@ Dependencies: Python~3, NumPy, Matplotlib.  All figures are reproducible
 by running the scripts in \texttt{simulation/}.
 
 % =============================================================================
-% Bibliography
+% Acknowledgments and Disclosure of Funding
 % =============================================================================
 
-\bibliographystyle{apalike}
+\acks{The author thanks Glenn White (University of Queensland) for
+invaluable interdisciplinary engagement, literature synthesis, and the
+critical observation that the Fröhlich coherence programme of the 1990s
+anticipated the computational mechanism implemented here.  The FETCH-AGI
+research system (VBRL Holdings) contributed literature survey, theoretical
+analysis, and the empirical $O(1/\sqrt{T})$ convergence validation.
+The simulation code and all experimental scripts are released under the
+MIT licence at \url{https://github.com/web3guru888/morphic-resonance-sim}.
+
+\textbf{Disclosure of funding:} No external funding was received for this work.
+\textbf{Competing interests:} The author has no competing interests to declare.}
+
+% =============================================================================
+% Bibliography (plainnat format, set by jmlr2e)
+% =============================================================================
+
 \begin{thebibliography}{99}
 
 \bibitem[Agar et~al.(1954)]{agar1954}
