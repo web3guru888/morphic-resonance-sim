@@ -158,15 +158,26 @@ class Agent:
 # ---------------------------------------------------------------------------
 
 class MorphicField:
-    """Accumulated Q-table from all past agents — the collective 'habit'."""
+    """Accumulated Q-table from all past agents — the collective 'habit'.
 
-    def __init__(self, shape):
+    With temporal decay (decay_rate > 0), older contributions fade
+    exponentially each time a new agent absorbs, modeling pheromone
+    evaporation in stigmergic systems.
+    """
+
+    def __init__(self, shape, decay_rate=0.0):
         self.total = np.zeros(shape, dtype=np.float64)
         self.weight_sum = 0.0
         self.count = 0
+        self.decay_rate = decay_rate
 
     def absorb(self, q_table, performance_weight=1.0):
-        """Add agent's Q-table, weighted by how well it performed."""
+        """Add agent's Q-table, weighted by how well it performed.
+        Applies exponential decay to existing field before adding."""
+        if self.decay_rate > 0 and self.weight_sum > 0:
+            decay = 1.0 - self.decay_rate
+            self.total *= decay
+            self.weight_sum *= decay
         self.total += q_table * performance_weight
         self.weight_sum += performance_weight
         self.count += 1
@@ -198,7 +209,7 @@ def performance_weight(eval_steps, max_steps=400):
 
 
 def run_condition(maze, condition, n_gen=50, pop=20, episodes=80,
-                  elite_frac=0.3, morphic_strength=0.5):
+                  elite_frac=0.3, morphic_strength=0.5, decay_rate=0.0):
     """
     Run one experimental condition across generations.
     Returns: list of avg eval steps per generation, and the morphic field (if any).
@@ -208,7 +219,7 @@ def run_condition(maze, condition, n_gen=50, pop=20, episodes=80,
     use_genetic = condition in ("genetic", "both")
     use_morphic = condition in ("morphic", "both")
 
-    field = MorphicField(q_shape) if use_morphic else None
+    field = MorphicField(q_shape, decay_rate=decay_rate) if use_morphic else None
     parents = None
     history = []
 
