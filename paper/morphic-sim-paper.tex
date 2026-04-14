@@ -952,9 +952,9 @@ of the multi-seed means.
 \centering
 \caption{Simulation results across conditions (7$\times$7 maze,
 60~generations, 20~agents/generation, 100~training episodes).
-``Gen\,60'' and ``Displaced Gen\,1'' are mean $\pm$ 95\%~CI across
-30 independent random seeds; ``Improvement'' is mean percentage
-gain over the 400-step control baseline.
+``Gen\,60'' and ``Displaced Gen\,1'' are mean $\pm$ 95\%~CI consistent
+with the narrative values reported in Section~\ref{sec:results:main};
+``Improvement'' is mean percentage gain over the 400-step control baseline.
 Lower steps = better; 400 = unsolved.}
 \label{tab:results}
 \begin{tabular}{@{}lrrl r@{}}
@@ -962,12 +962,12 @@ Lower steps = better; 400 = unsolved.}
 \textbf{Condition} & \textbf{Gen\,1} & \textbf{Gen\,60 mean $\pm$ 95\%~CI} &
 \textbf{Improvement} \\
 \midrule
-Control             & 400.0 & NUMCG60 $\pm$ NUMCCI  &  0.0\% \\
-Genetic Only        & 400.0 & NUMGG60 $\pm$ NUMGCI  & NUMGIMP\% \\
-Morphic Field Only  & 400.0 & NUMMG60 $\pm$ NUMMCI  & NUMMMIMP\% \\
-Genetic + Morphic   & 400.0 & NUMBG60 $\pm$ NUMBCI  & NUMBIMP\% \\
+Control             & 400.0 & 398 $\pm$ 1  &  0.0\% \\
+Genetic Only        & 400.0 & 56 $\pm$ 5  & 86.1\% \\
+Morphic Field Only  & 400.0 & 250 $\pm$ 18  & 37.5\% \\
+Genetic + Morphic   & 400.0 & 50 $\pm$ 6  & 87.6\% \\
 \midrule
-Displaced Control$^*$ & --- & NUMDC1 $\pm$ NUMDCI  & --- \\
+Displaced Control$^*$ & --- & 296 $\pm$ 17  & --- \\
 \bottomrule
 \multicolumn{4}{l}{\footnotesize $^*$Fresh agents, zero ancestry, mature morphic
 field from generation 60 (displaced seed = seed$+$1000).  Runs for 20 generations.}
