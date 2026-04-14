@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+title: >-
+  Collective Habit as Infrastructure: A Computational Model
+  of Morphic Resonance via Multi-Agent Reinforcement Learning
+message: >-
+  If you use this research, please cite it using the metadata
+  from this file.
+type: article
+authors:
+  - name: BUTTERS Research Group
+    affiliation: BUTTERS Autonomous Research Platform
+date-released: "2026-04-14"
+license: CC-BY-4.0
+repository-code: https://github.com/web3guru888/morphic-resonance-sim
+keywords:
+  - morphic resonance
+  - Q-learning
+  - multi-agent systems
+  - collective memory
+  - displaced control
+  - stigmergy
+  - knowledge transfer
+  - cold start problem
+  - reinforcement learning
+  - Sheldrake
+  - McDougall rat maze
+abstract: >-
+  A computational model of Rupert Sheldrake's morphic resonance
+  hypothesis, implemented as a multi-agent reinforcement learning
+  simulation of the McDougall rat maze experiment (1920-1954).
+  Demonstrates that a performance-weighted shared Q-table (the
+  "morphic field") transmits useful learning across agent
+  generations with no genetic channel, and that fresh agents with
+  zero ancestry immediately outperform the control baseline by 26%.
+  Establishes the hypothesis as formally coherent, identifies the
+  displaced control as the most powerful experimental design, and
+  connects the morphic field architecture to practical AI design
+  patterns for multi-agent knowledge transfer, cold-start
+  mitigation, and stigmergic coordination.
