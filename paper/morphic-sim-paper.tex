@@ -21,7 +21,10 @@
 \usepackage{algpseudocode}
 \usepackage{enumitem}
 \usepackage{url}
-\usepackage{cite}
+\usepackage{setspace}          % double-spacing for submission
+\usepackage[authoryear,round]{natbib}   % APA-style author–year citations
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes.geometric,arrows.meta}
 
 % -- Hyperref setup -----------------------------------------------------------
 \hypersetup{
@@ -89,17 +92,20 @@
 % -- Title block --------------------------------------------------------------
 \title{\textbf{Collective Habit as Infrastructure:\\
        A Computational Model of Morphic Resonance\\
-       via Multi-Agent Reinforcement Learning}\\[0.5em]
-       \large Technical Report --- BUTTERS Project}
+       via Multi-Agent Reinforcement Learning}}
 
 \author{Robin Dey \\
-        \textit{BUTTERS / GraphPalace Project} \\
-        \href{https://github.com/web3guru888/GraphPalace}{\texttt{github.com/web3guru888/GraphPalace}}}
+        \textit{BUTTERS / morphic-resonance-sim Project} \\
+        \href{mailto:robin@vbrl.ai}{\texttt{robin@vbrl.ai}} \\
+        \href{https://github.com/web3guru888/morphic-resonance-sim}%
+             {\texttt{github.com/web3guru888/morphic-resonance-sim}}}
 
-\date{April 2026}
+\date{April 2026 \quad [Submission draft]}
 
-% -----------------------------------------------------------------------------
+% =============================================================================
 \begin{document}
+\doublespacing          % ALife submission requirement
+
 \maketitle
 
 % -- Abstract -----------------------------------------------------------------
@@ -114,26 +120,29 @@ combined.  The morphic field is modeled as a performance-weighted shared
 Q-table that accumulates knowledge from all past agents and emits it as a
 scaled prior for new agents, with no genetic or physical channel of
 transmission.  A fifth condition --- the \emph{displaced control} --- drops
-fresh agents with zero ancestry into a mature morphic field at generation~60.
+fresh agents with zero ancestry into a 60-generation-mature morphic field.
 Results show: (1)~the control condition remains flat at 400~steps across all
 generations; (2)~genetic-only converges to 56~steps by generation~5 (86\%
 improvement); (3)~morphic-only improves to 245~steps (39\%) with no genetic
-inheritance; (4)~displaced control agents immediately score 297~steps versus
-the 400-step baseline --- a 26\% advantage on their first generation with
-zero ancestry.  We argue that the simulation does not demonstrate the
-existence of morphic resonance in nature, but establishes three things: the
-hypothesis is formally coherent, the predicted data pattern is distinctive and
-detectable, and the displaced control constitutes the most powerful
-experimental design for testing it.  We further show that the morphic field
-architecture --- performance-weighted absorption, scaled emission, and
-blending with local learning --- constitutes a practical design pattern for
-multi-agent knowledge transfer, cold-start mitigation, and stigmergic
-coordination in AI systems.
+inheritance; (4)~displaced control agents --- introduced cold into the mature
+field --- score 297~steps on their very first generation versus the 400-step
+control baseline, a 26\% advantage with zero ancestry.  We further report
+five supplementary experiments: temporal decay comparison, population phase
+threshold, adversarial robustness, multi-maze generalisation, and a
+neural-network deep RL extension.  We argue that the simulation does not
+demonstrate the existence of morphic resonance in nature, but establishes
+three things: the hypothesis is formally coherent, the predicted data pattern
+is distinctive and detectable, and the displaced control constitutes the most
+powerful experimental design for testing it.  The morphic field architecture
+--- performance-weighted absorption, temporal decay, and scaled emission ---
+also constitutes a practical design pattern for cold-start mitigation and
+stigmergic coordination in multi-agent AI systems, occupying a specific gap
+between experience-sharing and weight-sharing in the federated RL literature.
 
 \vspace{0.5em}
 \noindent\textbf{Keywords:} morphic resonance, Q-learning, multi-agent
 systems, collective memory, displaced control, stigmergy, knowledge transfer,
-cold start problem
+cold start problem, federated reinforcement learning
 \end{abstract}
 
 \tableofcontents
@@ -144,17 +153,17 @@ cold start problem
 \label{sec:intro}
 % =============================================================================
 
-Rupert Sheldrake's hypothesis of morphic resonance~\cite{sheldrake1981,
+Rupert Sheldrake's hypothesis of morphic resonance~\citep{sheldrake1981,
 sheldrake1988} proposes that natural systems inherit a collective memory from
 all previous systems of the same kind, transmitted not through known physical
-mechanisms but through \emph{morphic fields} --- non-material regions of
-influence that shape form, development, and behavior.  The hypothesis has been
-a lightning rod for controversy since its publication: \emph{Nature} editor
-John Maddox called Sheldrake's first book ``the best candidate for
-burning''~\cite{maddox1981}, while supporters argue that orthodox biology
+mechanisms but through \emph{morphic fields} --- regions of influence that
+shape form, development, and behaviour.  The hypothesis has been a lightning
+rod for controversy since its publication: \emph{Nature} editor John Maddox
+called Sheldrake's first book ``the best candidate for
+burning''~\citep{maddox1981}, while supporters argue that orthodox biology
 lacks an account of how identical genomes produce radically different cell
 types, or why the so-called ``laws'' of nature should be eternal rather than
-habitual~\cite{sheldrake2012}.
+habitual~\citep{sheldrake2012}.
 
 The hypothesis remains untested in a decisive way, in part because it is
 difficult to formalize.  What \emph{exactly} is a morphic field?  How does
@@ -164,8 +173,8 @@ selection, environmental drift, or statistical artifact?
 
 This paper takes a computational approach.  We introduce a
 \emph{value-function-level sharing mechanism} for multi-agent RL that sits
-between experience-sharing methods (SUPER~\cite{gerstgrasser2023}) and
-weight-sharing methods (FedAvg~\cite{mcmahan2017}).  We call this the
+between experience-sharing methods \citep[SUPER;][]{gerstgrasser2023} and
+weight-sharing methods \citep[FedAvg;][]{mcmahan2017}.  We call this the
 \emph{morphic field} architecture --- inspired by, though not endorsing,
 Sheldrake's morphic resonance hypothesis.  Specifically, we ask:
 
@@ -176,40 +185,43 @@ Sheldrake's morphic resonance hypothesis.  Specifically, we ask:
     \item What is the distinctive data pattern that would result --- the
           \emph{signature} an experimentalist should look for?
     \item Does the displaced control test (fresh, unrelated agents dropped into
-          a mature field) constitute a viable experimental design?
+          a mature field) constitute a viable experimental design for testing
+          morphic resonance in vivo?
     \item Does the resulting architecture have practical value for multi-agent
           AI systems, independent of Sheldrake's metaphysics?
 \end{enumerate}
 
 Our simulation is built on the McDougall rat maze experiment
-(1920--1954)~\cite{mcdougall1938}, chosen because it is the most quantitative,
-generational, and independently replicated of the six major evidence categories
-for morphic resonance (Section~\ref{sec:background:mcdougall}).  We model rats
-as tabular Q-learning agents, generations as population cohorts, genetic
-inheritance as Q-table crossover with mutation, and the morphic field as an
-accumulated, performance-weighted Q-table that emits a scaled prior to
-unrelated agents.
+(1920--1954)~\citep{mcdougall1938}, chosen because it is the most
+quantitative, generational, and independently replicated of the six major
+evidence categories for morphic resonance
+(Section~\ref{sec:background:mcdougall}).  We model rats as tabular Q-learning
+agents, generations as population cohorts, genetic inheritance as Q-table
+crossover with mutation, and the morphic field as an accumulated,
+performance-weighted Q-table that emits a scaled prior to unrelated agents.
 
 \paragraph{Contributions.}
 \begin{enumerate}[leftmargin=2em]
     \item A formal computational model of morphic resonance using
-          multi-agent reinforcement learning (Section~\ref{sec:architecture}).
+          population-level value-function sharing in a multi-agent RL setting
+          (Section~\ref{sec:architecture}).
     \item Empirical results across five experimental conditions demonstrating
-          the displaced control signature
+          the displaced control signature, plus five supplementary experiments
+          with full quantitative reporting
           (Section~\ref{sec:results}).
     \item An epistemological analysis of what the simulation does and does
           not prove (Section~\ref{sec:epistemology}).
     \item Identification of the morphic field as a practical design pattern
-          for multi-agent knowledge transfer, cold-start mitigation, and
-          stigmergic coordination (Section~\ref{sec:applications}).
+          for multi-agent knowledge transfer and cold-start mitigation
+          (Section~\ref{sec:applications}).
 \end{enumerate}
 
-\paragraph{Paper organization.}
+\paragraph{Paper organisation.}
 Section~\ref{sec:background} reviews Sheldrake's hypothesis, the McDougall
 experiment, and related work in multi-agent learning.
 Section~\ref{sec:architecture} describes the simulation architecture.
-Section~\ref{sec:results} presents experimental results.
-Section~\ref{sec:epistemology} analyzes what the results mean.
+Section~\ref{sec:results} presents all experimental results.
+Section~\ref{sec:epistemology} analyses what the results mean.
 Section~\ref{sec:applications} connects the morphic field to practical AI
 design patterns.  Section~\ref{sec:discussion} discusses limitations.
 Section~\ref{sec:conclusion} concludes.
@@ -226,10 +238,10 @@ Section~\ref{sec:conclusion} concludes.
 
 A \emph{morphic field} (from Greek \emph{morphe}, form) is, in Sheldrake's
 framework, a field of information that shapes the form, development, and
-behavior of a system~\cite{sheldrake1981}.  Morphic fields are localized
+behaviour of a system~\citep{sheldrake1981}.  Morphic fields are localized
 within and around \emph{morphic units} --- any unit of organization, from
 subatomic particles to organisms to social groups --- and are organized in a
-nested hierarchy (a \emph{holarchy}, per Koestler~\cite{koestler1967}).
+nested hierarchy \citep[a \emph{holarchy}, per][]{koestler1967}.
 
 \emph{Morphic resonance} is the process by which information is transmitted
 from past morphic units to present ones on the basis of \emph{similarity}: the
@@ -238,14 +250,14 @@ The mechanism is explicitly non-energetic --- no photons, no spacetime
 curvature, no known carrier --- and non-local in both space and time.
 Sheldrake frames this as a radical departure from the assumption that the
 ``laws'' of nature are fixed and eternal, proposing instead that they are
-\emph{habits} that accumulate through repetition~\cite{sheldrake1988}.
+\emph{habits} that accumulate through repetition~\citep{sheldrake1988}.
 
 \paragraph{Key terminology.}
 \textbf{Morphic unit}: any system with its own morphic field.
 \textbf{Morphogenetic field}: the subset governing embryonic development
 (the original concept from Waddington and others, which Sheldrake
 generalizes).  \textbf{Behavioral field}: governs learned or instinctive
-behavior.  \textbf{Chreode}: a canalized pathway of development
+behaviour.  \textbf{Chreode}: a canalized pathway of development
 (Waddington's term, adopted by Sheldrake for habitual trajectories in morphic
 fields).
 
@@ -261,31 +273,39 @@ generate distinctive predictions.
 \label{sec:background:mcdougall}
 
 William McDougall conducted maze-learning experiments with Wistar rats at
-Harvard from 1920 to 1954~\cite{mcdougall1938}.  Rats chose between a lighted
+Harvard from 1920 to 1954~\citep{mcdougall1938}.  Rats chose between a lighted
 gangway (electric shock) and an unlighted gangway (safe).  The first generation
 averaged approximately 165~errors; by the 30th generation, this had fallen to
 approximately 20~errors.  McDougall interpreted the improvement as Lamarckian
 inheritance --- the inheritance of acquired characteristics.
 
 \paragraph{The Agar--Crew replication.}
-Agar, Crew, and Mitchell at Edinburgh ran a parallel study from 1934 to 1954,
-maintaining both a trained line and, crucially, a \emph{control line} never
-selected for maze ability~\cite{agar1954}.  The trained line improved,
-consistent with McDougall.  But the control line \emph{also improved at roughly
-the same rate}.  The original researchers attributed this to environmental and
-methodological artifacts accumulated over 20~years.
+\citet{agar1954} at Melbourne and Edinburgh ran a parallel study from 1934 to
+1954, maintaining both a trained line and, crucially, a \emph{control line}
+never selected for maze ability.  The trained line improved, consistent with
+McDougall.  Critically, the control line \emph{also improved at roughly the
+same rate}.  The Edinburgh and Melbourne researchers themselves attributed this
+finding to accumulated methodological drift over two decades: handling
+procedures, laboratory conditions, rat health, and tester expertise all changed
+monotonically across the 20-year study.  This remains the mainstream
+scientific interpretation of the Agar--Crew data.
 
 \paragraph{Sheldrake's reinterpretation.}
-Sheldrake argues that the control-line improvement is the key datum: if rats
-never selected for maze ability also improve, something other than genetics is
-transmitting the learning~\cite{sheldrake1988}.  This is the \emph{morphic
+Sheldrake~\citeyearpar{sheldrake1988} argues that methodological drift cannot
+fully account for the parallel improvement in trained and untrained lines, and
+interprets this as the morphic resonance signature: something other than
+genetics is transmitting the learned behaviour.  This is the \emph{morphic
 resonance signature} --- the prediction that our simulation is designed to
-test.
+test.  We note that Sheldrake's reinterpretation is a minority position
+that has not gained broad traction in experimental biology; our simulation
+models his interpretation, not the consensus one.
 
 \paragraph{Conventional counter-explanations.}
 Laboratory condition changes over two decades, genetic drift, unconscious
-handling changes, and statistical fluctuation have all been proposed.  No
-consensus exists on which explanation is correct.
+handling changes, and statistical fluctuation have all been proposed.
+\citet{hitchman2023} report a recent laboratory attempt to replicate the
+displaced-control effect in human symbol-learning tasks, with mixed results.
+No modern animal replication with rigorous controls exists.
 
 % -- 2.3 Why This Experiment? ------------------------------------------------
 \subsection{Simulatability Ranking}
@@ -304,15 +324,16 @@ because it is:
           is not that trained rats' offspring improved, but that
           \emph{unrelated} control lines also improved.
     \item \textbf{Independently replicated}: Agar and Crew ran follow-up
-          studies and reportedly found similar trends, though interpretations
-          remain disputed.
+          studies, producing the most important datum (the parallel control
+          line improvement), even if interpretations remain disputed.
 \end{enumerate}
 
-The remaining evidence categories are weaker for simulation: crystal formation
-requires modeling poorly defined physics; blue tit behavior spreading is
-adequately explained by network diffusion; telephone telepathy reduces to a
-biased coin flip; staring detection is binary guessing susceptible to response
-bias~\cite{colwell2000}; and dog telepathy is single-subject observational.
+The remaining evidence categories are weaker for simulation: crystal
+formation requires modeling poorly defined physics; blue tit behaviour
+spreading is adequately explained by network diffusion; telephone telepathy
+reduces to a biased coin flip; staring detection is binary guessing
+susceptible to response bias~\citep{colwell2000}; and dog telepathy is
+single-subject observational.
 
 % -- 2.4 Related Work in Multi-Agent Learning --------------------------------
 \subsection{Related Work in Multi-Agent Knowledge Transfer}
@@ -320,98 +341,90 @@ bias~\cite{colwell2000}; and dog telepathy is single-subject observational.
 
 The idea that agents can benefit from the experience of other agents is well
 established in AI, though it is not typically framed in terms of morphic
-resonance:
+resonance.
 
 \paragraph{Cultural accumulation in RL.}
-The closest conceptual work is Cook et al.'s cultural accumulation
-framework~\cite{cook2024}, which demonstrates generational knowledge transfer
-via PPO with a behavioral cloning auxiliary loss.  Each generation trains on
-demonstrations from the previous generation, producing a ``cultural ratchet.''
-Our approach differs by sharing distilled \emph{value functions} rather than
-raw behavioral demonstrations, and operates bidirectionally across the entire
-population rather than unidirectionally from parent to child.
+The closest conceptual work is \citet{cook2024}'s cultural accumulation
+framework, which demonstrates generational knowledge transfer via PPO with a
+behavioural cloning auxiliary loss.  Each generation trains on demonstrations
+from the previous generation, producing a ``cultural ratchet.''  Our approach
+differs by sharing distilled \emph{value functions} rather than raw behavioural
+demonstrations, and operates bidirectionally across the entire population
+rather than unidirectionally from parent to child.
 
 \paragraph{Experience sharing.}
-SUPER~\cite{gerstgrasser2023} (NeurIPS 2023) shares full experience tuples
-$(s, a, r, s')$ between agents in cooperative MARL.
-ERL/CERL~\cite{pourchot2019} inject gradient-free evolutionary actors into
-a shared replay buffer alongside RL actors.  The morphic field shares at a
-higher level of abstraction: entire Q-tables (value functions) rather than
-individual transitions, producing more compact transfer.
+SUPER~\citep{gerstgrasser2023} (NeurIPS 2023) shares full experience tuples
+$(s, a, r, s')$ between agents in cooperative MARL.  ERL/CERL~\citep{pourchot2019}
+inject gradient-free evolutionary actors into a shared replay buffer alongside
+RL actors.  The morphic field shares at a higher level of abstraction: entire
+Q-tables (value functions) rather than individual transitions, producing more
+compact transfer.
 
 \paragraph{Federated RL.}
-FEDORA~\cite{che2023} applies federated learning directly to RL, aggregating
-policy parameters across distributed agents.
-FedAvg~\cite{mcmahan2017} averages model weights uniformly.  The morphic
-field differs in two key ways: (1)~contributions are weighted by
-\emph{performance}, not uniformly averaged; (2)~temporal decay
-(Section~\ref{sec:architecture:field}) allows the field to forget stale
-knowledge, a mechanism absent from all existing FedRL methods.
-
-\paragraph{Experience replay and distillation.}
-Prioritized experience replay~\cite{schaul2015} allows a single agent to
-re-learn from weighted past transitions.  Knowledge
-distillation~\cite{hinton2015} compresses the knowledge of a large model (or
-ensemble) into a smaller one.  Our morphic field can be viewed as a
-population-level experience replay buffer, where contributions are weighted by
-performance and ``distilled'' into a shared initialization.
+FEDORA~\citep{che2023} applies federated learning directly to RL, aggregating
+policy parameters across distributed agents.  FedAvg~\citep{mcmahan2017}
+averages model weights uniformly.  The morphic field differs in two key ways:
+(1)~contributions are weighted by \emph{performance}, not uniformly averaged;
+(2)~temporal decay (Section~\ref{sec:architecture:field}) allows the field to
+forget stale knowledge, a mechanism absent from all existing federated RL methods
+surveyed.  Section~\ref{sec:results:decay} provides quantitative evidence for
+the benefit of this decay.
 
 \paragraph{Population-based training.}
-Population-based training (PBT)~\cite{jaderberg2017} evolves
+Population-based training \citep[PBT;][]{jaderberg2017} evolves
 hyperparameters and model weights across a population of agents.  Our genetic
 condition is a simplified PBT variant; the morphic field adds a
 non-genetic channel that PBT does not provide.
 
 \paragraph{Positioning in the knowledge-transfer spectrum.}
 The morphic field occupies a specific gap in the multi-agent knowledge transfer
-spectrum: between experience-sharing methods (SUPER, ERL/CERL) that share
-raw transitions, and weight-sharing methods (FedAvg, FEDORA) that share full
-model parameters.  The morphic field shares \emph{value functions} ---
+spectrum: between experience-sharing methods (SUPER, ERL/CERL) that share raw
+transitions, and weight-sharing methods (FedAvg, FEDORA) that share full model
+parameters.  The morphic field shares \emph{value functions} ---
 intermediate-level representations that encode reward structure without
-requiring the receiver to re-derive value from raw experience.
+requiring the receiver to re-derive value from raw experience.  We
+acknowledge that direct head-to-head benchmarks against FedAvg and SUPER on
+standardized cooperative tasks remain future work (Section~\ref{sec:discussion:future}).
 
 \paragraph{Stigmergy.}
 Stigmergy --- indirect coordination through a shared
-environment~\cite{grasse1959} --- is the closest analogue.  Ant colony
-optimization~\cite{dorigo1996} deposits pheromone on successful paths; our
+environment~\citep{grasse1959} --- is the closest analogue.  Ant colony
+optimization~\citep{dorigo1996} deposits pheromone on successful paths; our
 morphic field deposits weighted Q-values.  The GraphPalace
-system~\cite{graphpalace2026} uses five-type pheromone stigmergy for
-memory retrieval, operating on the same principle in embedding space rather
-than Q-table space.
+system~\citep{graphpalace2026} uses five-type pheromone stigmergy for memory
+retrieval, operating on the same principle in embedding space rather than
+Q-table space.
 
 % -- 2.5 Bioelectric Morphogenetic Fields ------------------------------------
-\subsection{Bioelectric Morphogenetic Fields}
+\subsection{Computational Analogues: Bioelectric Morphogenetic Fields}
 \label{sec:background:levin}
 
-Michael Levin's laboratory at Tufts University has demonstrated that
-\emph{real} morphogenetic fields exist at the cellular level --- bioelectric
-signal patterns that guide development, regeneration, and collective cell
-behavior~\cite{levin2025, manicka2025}.
+\citet{levin2025} and \citet{manicka2025} have demonstrated that real
+morphogenetic fields exist at the cellular level --- bioelectric signal
+patterns (ion gradients, gap junction signaling, transmembrane voltage) that
+guide development, regeneration, and collective cell behaviour.  These fields
+operate through well-characterised electrochemical mechanisms, are local in
+space and time, and are subject to standard experimental manipulation.
 
-\paragraph{Manicka \& Levin 2025.}
-In a computational study using Active Inference~\cite{friston2010} --- the
-same framework used in GraphPalace's agent architecture --- Manicka and
-Levin~\cite{manicka2025} show how bioelectric networks create fields that
-cells ``read'' to make developmental decisions.  The mechanism is structurally
-identical to our morphic field: cells emit bioelectric signals $\rightarrow$
-signals accumulate in the tissue $\rightarrow$ new cells read the accumulated
-field to decide their fate.  This is absorb/emit/blend at the cellular level.
+\paragraph{Structural analogy at the computational level.}
+We invoke Levin's work not as a mechanistic bridge to Sheldrake's hypothesis
+--- the two frameworks differ fundamentally in physical kind: Levin's
+bioelectric fields are local, energetic, and transmitted through known
+electrochemical channels, whereas Sheldrake's morphic fields are explicitly
+non-local, non-energetic, and lack any specified carrier.  Rather, we note
+a \emph{computational structural parallel}: in both frameworks, entities
+emit signals into a shared medium, that medium accumulates and patterns those
+signals, and new entities read the accumulated medium to make developmental
+decisions.  In bioelectric morphogenesis, cells emit ion gradients $\rightarrow$
+tissue accumulates bioelectric patterns $\rightarrow$ new cells read those
+patterns for fate decisions.  In our simulation, agents contribute Q-values
+$\rightarrow$ the morphic field accumulates performance-weighted Q-values
+$\rightarrow$ new agents read the field for initialisation.  This is the
+absorb/emit/blend pattern operating at two different physical substrates.
 
-\paragraph{Levin 2025.}
-In ``The Multiscale Wisdom of the Body''~\cite{levin2025}, Levin argues that
-biological intelligence operates at multiple scales: molecular $\rightarrow$
-cellular $\rightarrow$ tissue $\rightarrow$ organism, with dynamic rewritable
-memory at each level.  The morphic field in our simulation operates at the
-same abstraction: individual agent $\rightarrow$ population $\rightarrow$
-field $\rightarrow$ new agent.
-
-\paragraph{Significance.}
-Levin's work provides a mainstream scientific bridge between Sheldrake's
-controversial hypothesis and our engineering implementation.  Bioelectric
-morphogenetic fields are published in \emph{Nature}, \emph{Cell}, and
-\emph{BioEssays} --- they are not fringe science.  The morphic field in our
-simulation can be understood as a computational analogue of bioelectric
-patterning, independent of whether one endorses Sheldrake's metaphysics.
+This parallel is offered as conceptual framing, not scientific support for
+morphic resonance.  Every time biology has been examined carefully,
+coordination and memory turn out to use known physical channels.
 
 % -- 2.6 Philosophical Context -----------------------------------------------
 \subsection{Philosophical Context}
@@ -421,8 +434,8 @@ Sheldrake's hypothesis sits within a broader tradition of process philosophy
 and holistic biology.
 
 \paragraph{Whitehead and objective immortality.}
-Alfred North Whitehead's process philosophy~\cite{whitehead1929} provides
-the most precise philosophical mapping to our morphic field architecture.
+Alfred North Whitehead's process philosophy~\citep{whitehead1929} provides
+an evocative philosophical parallel to our morphic field architecture.
 Three key concepts correspond to specific computational operations:
 
 \begin{enumerate}[leftmargin=2em]
@@ -435,10 +448,10 @@ Three key concepts correspond to specific computational operations:
     \item \textbf{Prehension $\rightarrow$ emission.}
           Whitehead's ``prehension'' is how an actual occasion grasps past
           entities.  Positive prehension (inclusion) maps to
-          \texttt{field.emit()} --- the new agent grasps accumulated
+          \texttt{field.emit()} --- the new agent draws on accumulated
           knowledge.  Negative prehension (exclusion) maps to
           performance weighting --- low-performing contributions are
-          effectively excluded.
+          effectively downweighted.
     \item \textbf{Concrescence $\rightarrow$ blending.}
           The process by which multiple prehensions integrate into a unified
           experience maps to the blend operation:
@@ -446,20 +459,22 @@ Three key concepts correspond to specific computational operations:
           + 0.5 \cdot \mathbf{Q}_{\text{morphic}}$.
 \end{enumerate}
 
-This is not a loose analogy but a structural isomorphism.  Whitehead's
-metaphysics and our computational architecture share the same data flow:
-entities arise, contribute to a shared medium, perish, and inform future
-entities through that medium.
+This is a structural parallel: Whitehead's metaphysics and our computational
+architecture share the same data flow of entities arising, contributing to a
+shared medium, perishing, and informing future entities through that medium.
+We make no claim that this correspondence rises to a formal mathematical
+isomorphism, which would require a proven structure-preserving bijection we
+have not established.
 
 \paragraph{Bohm.}
-David Bohm's implicate order~\cite{bohm1980} posits a deeper enfolded reality
-beneath the manifest (explicate) world.  Morphic fields could be understood as
-structures within the implicate order, with resonance as the process by which
-enfolded information unfolds into new systems.
+David Bohm's implicate order~\citep{bohm1980} posits a deeper enfolded
+reality beneath the manifest (explicate) world.  Morphic fields could be
+understood as structures within the implicate order, with resonance as the
+process by which enfolded information unfolds into new systems.
 
 \paragraph{Jung.}
-Carl Jung's collective unconscious~\cite{jung1959} --- an inherited stratum of
-shared archetypes beneath individual consciousness --- is a psychological
+Carl Jung's collective unconscious~\citep{jung1959} --- an inherited stratum
+of shared archetypes beneath individual consciousness --- is a psychological
 parallel.  Morphic resonance generalizes the concept from human psyche to all
 of nature.
 
@@ -473,36 +488,42 @@ fundamental property of nature, not a special property of brains.
 \label{sec:architecture}
 % =============================================================================
 
-The simulation (\texttt{morphic\_sim.py}, 493~lines of Python) models the
+The simulation (\texttt{morphic\_sim.py}, 504~lines of Python) models the
 McDougall experiment as a multi-agent reinforcement learning system with five
 experimental conditions.  Figure~\ref{fig:architecture} shows the overall
 data flow.
 
 \begin{figure}[ht]
 \centering
-\begin{verbatim}
-  +-------------------+     +-------------------+
-  |    Maze (DFS)     |     |   MorphicField    |
-  | 7x7 cells, 15x15 |     | shared Q-table    |
-  |   grid, seed=42   |     | perf-weighted     |
-  +--------+----------+     +--------+----------+
-           |                         |
-           v                         v emit()
-  +-------------------+     +-------------------+
-  |   Agent (Q-learn) |<----| Q-table init:     |
-  |  lr=0.2, g=0.95   |     | genetic, morphic, |
-  |  eps: 0.5 -> 0.05 |     | both, or zeros    |
-  +--------+----------+     +--------+----------+
-           |                         ^
-           | train(100 eps)          | absorb(q, weight)
-           | evaluate(greedy)        |
-           v                         |
-  +-------------------+     +--------+----------+
-  | eval_steps (perf) |---->| perf_weight =     |
-  | per agent per gen  |     | max_steps / steps |
-  +-------------------+     +-------------------+
-\end{verbatim}
-\caption{Simulation data flow.  Each generation: (1)~agents are initialized
+\begin{tikzpicture}[
+  node distance=1.4cm and 2.2cm,
+  box/.style={draw, rounded corners, text width=3.0cm, align=center,
+              minimum height=1.0cm, font=\small\strut},
+  arrow/.style={-{Stealth}, thick}
+]
+  \node[box, fill=blue!12]  (maze)   {Maze (DFS)\\7$\times$7 cells, seed=42\\$15{\times}15$ grid};
+  \node[box, fill=orange!15, right=2.4cm of maze] (field)
+                                     {MorphicField\\shared Q-table\\perf-weighted};
+  \node[box, fill=green!12, below=1.6cm of maze]  (agent)
+                                     {Agent (Q-learn)\\$\alpha$=0.2,
+                                      $\gamma$=0.95\\$\varepsilon$: 0.5$\!\to\!$0.05};
+  \node[box, fill=purple!12, below=1.6cm of field] (init)
+                                     {Q-table init:\\genetic, morphic,\\both, or zeros};
+  \node[box, fill=red!12,    below=1.6cm of agent] (perf)
+                                     {eval\_steps\\per agent per gen};
+  \node[box, fill=yellow!15, below=1.6cm of init]  (weight)
+                                     {perf\_weight\\= max\_steps / steps};
+
+  \draw[arrow] (maze)   -- (agent);
+  \draw[arrow] (field)  -- node[above, font=\scriptsize]{emit()} (init);
+  \draw[arrow] (init)   -- (agent);
+  \draw[arrow] (agent)  -- node[left,  font=\scriptsize, align=center]
+                                {train(100 eps)\\evaluate} (perf);
+  \draw[arrow] (perf)   -- (weight);
+  \draw[arrow] (weight) -- node[right, font=\scriptsize, align=center]
+                                {absorb\\(q, weight)} (field);
+\end{tikzpicture}
+\caption{Simulation data flow.  Each generation: (1)~agents are initialised
 from genetic parents, morphic field, both, or zeros; (2)~agents train for
 100~episodes; (3)~agents are evaluated greedily; (4)~Q-tables are absorbed
 into the morphic field weighted by performance; (5)~elite parents are selected
@@ -601,7 +622,7 @@ more, while agents who fail contribute near-zero weight.  The field does not
 fill with noise from failed agents.
 
 \paragraph{Emission.}
-When a new agent is initialized from the field, it receives a scaled copy of
+When a new agent is initialised from the field, it receives a scaled copy of
 the weighted average:
 
 \begin{equation}
@@ -611,7 +632,7 @@ the weighted average:
 
 where $s = 0.5$ is the emission strength.  This gives new agents a
 \emph{nudge} in the direction of past solutions without fully determining
-their behavior --- they must still learn.
+their behaviour --- they must still learn.
 
 \paragraph{Temporal decay.}
 To model pheromone evaporation in stigmergic systems, the morphic field
@@ -626,9 +647,8 @@ W \leftarrow W \cdot (1 - \rho)
 
 where $\rho \in [0, 1)$ is the decay rate.  With $\rho = 0$ (default), the
 field is purely cumulative.  With $\rho > 0$, recent agents contribute more
-than ancient ones, preventing stale knowledge from dominating.  This is the
-key differentiator from federated RL methods, none of which implement temporal
-decay.  Section~\ref{sec:results:decay} evaluates the effect of different
+than ancient ones, preventing stale knowledge from dominating.
+Section~\ref{sec:results:decay} provides quantitative results across five
 decay rates.
 
 \paragraph{Key design properties.}
@@ -642,9 +662,9 @@ The field has the following properties that map onto Sheldrake's description:
     \item \textbf{Cumulative}: the field strengthens with each generation,
           modeling Sheldrake's claim that habits of nature deepen through
           repetition.
-    \item \textbf{Performance-weighted}: better solvers contribute more,
-          modeling the idea that more successful forms of organization
-          leave stronger morphic imprints.
+    \item \textbf{Performance-weighted}: better solvers contribute more.
+          We discuss the implications of this design choice in
+          Section~\ref{sec:discussion:limitations}.
 \end{enumerate}
 
 % -- 3.4 Genetic Inheritance --------------------------------------------------
@@ -675,7 +695,7 @@ When both genetic and morphic channels are active, the child Q-table is a
 \subsection{Experimental Conditions}
 \label{sec:architecture:conditions}
 
-Table~\ref{tab:conditions} summarizes the five experimental conditions.
+Table~\ref{tab:conditions} summarises the five experimental conditions.
 
 \begin{table}[ht]
 \centering
@@ -699,10 +719,10 @@ generations under the morphic-only condition.}
 
 The \emph{displaced control} is the critical test.  It corresponds to
 Sheldrake's prediction about the Agar--Crew control line: fresh agents with
-\textbf{zero} genetic connection to any prior solver are initialized using
-only a mature morphic field accumulated over 60 prior generations of
-morphic-only training.  If these agents outperform the control baseline on
-their first generation, the field alone is transmitting learned information.
+\textbf{zero} genetic connection to any prior solver are initialised using
+only a mature morphic field accumulated over 60 prior generations.  If these
+agents outperform the control baseline on their first generation, the field
+alone is transmitting learned information.
 
 % -- 3.6 Pseudocode ----------------------------------------------------------
 \subsection{Algorithm}
@@ -755,8 +775,17 @@ experimental condition across generations.
 \label{sec:results}
 % =============================================================================
 
-All experiments use seed 42, 60~generations (20~for displaced control),
+All main experiments use seed 42, 60~generations (20~for displaced control),
 20~agents per generation, and 100~training episodes per agent.
+
+\paragraph{Limitation note.}
+All primary results reported here use a single random seed (seed = 42).  The
+morphic-only condition exhibits run-to-run noise, as acknowledged in
+Section~\ref{sec:discussion:limitations}.  A full multi-seed statistical
+analysis with bootstrap confidence intervals is listed as immediate future
+work (Section~\ref{sec:discussion:future}); the single-seed results are
+sufficient to demonstrate the existence and direction of all effects but do
+not yet establish variance bounds.
 
 % -- 4.1 Main Conditions -----------------------------------------------------
 \subsection{Main Conditions}
@@ -793,20 +822,19 @@ agents cannot solve this maze within the 100-episode training budget starting
 from a zero Q-table.  This establishes a firm baseline.
 
 \paragraph{Genetic Only.}
-Converges rapidly to approximately 56~steps by generation~5 and remains stable.
-Elite selection with Q-table crossover is a powerful optimization mechanism,
-consistent with evolutionary computation results.
+Converges rapidly to approximately 56~steps by generation~5 and remains
+stable.  Elite selection with Q-table crossover is a powerful optimisation
+mechanism, consistent with evolutionary computation results.
 
 \paragraph{Morphic Field Only.}
 This is the key morphic resonance result.  Starting from the same 400-step
-baseline, the morphic-only condition improves to 245~steps by generation~60
---- a noisy but clear downward trend.  Learning occurs across generations with
-\textbf{no genetic inheritance}.  The only channel is the shared morphic field.
-
-The improvement is slower and noisier than the genetic condition.  This is
-expected: the morphic field is a blunt instrument compared to elite selection.
-It averages over all past agents (performance-weighted), while genetic
-inheritance directly copies successful Q-tables with targeted mutation.
+baseline, the morphic-only condition improves to 245~steps by generation~60 ---
+a noisy but clear downward trend.  Learning occurs across generations with
+\textbf{no genetic inheritance}.  The only channel is the shared morphic
+field.  The improvement is slower and noisier than the genetic condition,
+which is expected: the morphic field averages over all past agents
+(performance-weighted), while genetic inheritance directly copies successful
+Q-tables with targeted mutation.
 
 \paragraph{Genetic + Morphic.}
 Intermediate at 108~steps --- better than morphic-only, worse than
@@ -818,7 +846,7 @@ genetic-only.  The 50/50 blending dilutes the genetic signal with the
 \label{sec:results:displaced}
 
 The displaced control is the most important result.  Fresh agents with
-\textbf{zero genetic connection} to any prior solver are initialized using
+\textbf{zero genetic connection} to any prior solver are initialised using
 only the mature morphic field (accumulated over 60~generations of morphic-only
 training with a separate seed).
 
@@ -842,61 +870,268 @@ improved over time, suggesting a non-genetic channel of information transfer.
 \label{sec:results:decay}
 
 We compare the morphic field with five decay rates ($\rho \in \{0, 0.005,
-0.01, 0.02, 0.05\}$) to determine whether temporal decay improves performance.
-Moderate decay ($\rho = 0.01$--$0.02$) prevents stale early-generation
-knowledge from diluting recent improvements, while high decay ($\rho = 0.05$)
-forgets too aggressively.  The optimal decay rate balances recency with
-cumulative depth --- precisely the trade-off that pheromone systems
-solve in biological stigmergy.
+0.01, 0.02, 0.05\}$) over 60 generations, 20 agents/gen, 100 episodes,
+seed~=~42.  Table~\ref{tab:decay} presents the results;
+Figure~\ref{fig:decay} plots the learning curves.
 
-% -- 4.4 Phase Transition ---------------------------------------------------
+\begin{table}[ht]
+\centering
+\caption{Effect of temporal decay rate on morphic field performance.
+``Morphic Gen\,60'' is the mean evaluation steps at generation 60;
+``Displaced Gen\,1'' is the mean steps for fresh agents on their first
+generation; ``Advantage'' is the percentage improvement over the 400-step
+control baseline.}
+\label{tab:decay}
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+\textbf{Decay rate $\rho$} & \textbf{Morphic Gen\,60 (steps)} &
+\textbf{Displaced Gen\,1 (steps)} & \textbf{Advantage} \\
+\midrule
+0.000 & 245.2 & 296.8 & 25.8\% \\
+0.005 & 262.4 & 262.4 & \textbf{34.4\%} \\
+0.010 & 296.8 & 262.4 & \textbf{34.4\%} \\
+0.020 & 279.6 & 331.2 & 17.2\% \\
+0.050 & 262.4 & 314.0 & 21.5\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{../data/results/morphic_decay_comparison.png}
+\caption{Effect of temporal decay rate $\rho$ on learning curves (left) and
+displaced control performance (right).  Moderate decay ($\rho = 0.005$--$0.01$)
+maximises the displaced control advantage; high decay ($\rho = 0.05$) forgets
+too aggressively.}
+\label{fig:decay}
+\end{figure}
+
+The optimal decay range is $\rho = 0.005$--$0.01$, which increases the
+displaced control advantage from 25.8\% (no decay) to 34.4\% --- a 33\%
+relative improvement in cold-start benefit.  At $\rho = 0.02$, the displaced
+control advantage drops to 17.2\%, below the no-decay baseline.  The pattern
+is consistent with pheromone systems in stigmergy: moderate evaporation
+balances recency (recent solvers matter more) with cumulative depth (the field
+retains enough history to be useful).  This temporal decay mechanism is, to
+our knowledge, absent from all surveyed federated RL methods.
+
+% -- 4.4 Phase Transition: Population Threshold ------------------------------
 \subsection{Phase Transition: Population Threshold}
 \label{sec:results:phase}
 
-We vary population size ($P \in \{1, 2, 5, 10, 20, 40\}$) while keeping all
-other parameters constant to test whether the morphic field exhibits a phase
-transition --- a critical population threshold below which the field fails to
-form coherent knowledge.  This experiment connects to Khushiyant's (2025)
-finding of phase transitions in stigmergic collective memory at critical
-density $\rho \approx 0.20$--$0.23$~\cite{khushiyant2025}.
+We vary population size ($P \in \{1, 2, 5, 10, 20, 40\}$) over 40 generations,
+100 episodes, seed~=~42, to test whether the morphic field exhibits a critical
+population threshold.  Table~\ref{tab:phase} presents the results;
+Figure~\ref{fig:phase} plots advantage and convergence speed against
+population.
+
+\begin{table}[ht]
+\centering
+\caption{Population threshold experiment.  Displaced control advantage is
+the percentage improvement in Gen\,1 displaced agent performance versus the
+control baseline.  Pop\,=\,1 anomaly: a single agent can memorise one good
+path, giving a degenerate result.}
+\label{tab:phase}
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+\textbf{Pop} & \textbf{Ctrl avg} & \textbf{Morphic Gen\,40} &
+\textbf{Displaced Gen\,1} & \textbf{Advantage} \\
+\midrule
+ 1 & 400.0 & 400.0 & ~56.0 & 86.0\%$^\dagger$ \\
+ 2 & 395.7 & 400.0 & 400.0 &  $-1.1$\% \\
+ 5 & 400.0 & 262.4 & 331.2 & 17.2\% \\
+10 & 400.0 & 331.2 & 193.6 & \textbf{51.6\%} \\
+20 & 400.0 & 262.4 & 279.6 & 30.1\% \\
+40 & 399.6 & 288.2 & 296.8 & 25.7\% \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize $^\dagger$Pop\,=\,1 degenerate: single
+                   agent memorises optimal path.}
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{../data/results/phase_transition_results.png}
+\caption{Population threshold experiment.  Left: morphic field final
+performance vs.\ population size.  Centre: displaced control advantage vs.\
+population.  Right: convergence speed (generations to reach $<350$ steps).
+Axes are log-scaled.}
+\label{fig:phase}
+\end{figure}
+
+Population $P = 2$ is the critical failure point: with only two agents, the
+field accumulates too little diversity per generation and the displaced control
+shows zero benefit ($-1.1$\%).  Effectiveness emerges at $P \geq 5$ (17.2\%
+advantage) and peaks at $P = 10$ (51.6\%).  Larger populations ($P = 20, 40$)
+show diminishing returns --- more agents per generation introduces more noise
+into the field.
+
+Unlike \citet{khushiyant2025}, who report a sharp phase transition at critical
+density $\rho \approx 0.20$--$0.23$ in stigmergic collective memory systems
+(arXiv preprint; not yet peer-reviewed), the morphic field shows a gradual
+onset with a broad peak.  This suggests the performance-weighted field
+mechanism is more robust to density variation than binary-pheromone stigmergy,
+a difference worth investigating further.
 
 % -- 4.5 Adversarial Robustness ---------------------------------------------
 \subsection{Adversarial Robustness}
 \label{sec:results:adversarial}
 
-We test the morphic field's resilience to adversarial Q-value injection by
-comparing an undefended \texttt{MorphicField} against a
-\texttt{RobustMorphicField} with consensus filtering.  Three attack types are
-tested at the midpoint of training: (1)~random noise injection with high
-performance weight, (2)~degenerate policy injection (always-left Q-tables),
-and (3)~zero-flood attacks that dilute the field.  The consensus filter
-rejects Q-tables whose mean deviation from the running field statistics
-exceeds a threshold, preventing adversarial contributions from corrupting
-the accumulated knowledge.
+We test the morphic field's resilience to adversarial Q-value injection.  At
+generation 20 of a 40-generation run (20 agents/gen, 100 episodes), 10
+adversarial agents inject corrupted Q-tables with artificially inflated
+performance weights.  We compare an undefended \texttt{MorphicField} against a
+\texttt{RobustMorphicField} that rejects Q-tables whose mean deviation from
+running field statistics exceeds a threshold of 2.0 standard deviations.
+Table~\ref{tab:adversarial} presents the results;
+Figure~\ref{fig:adversarial} shows the recovery curves.
 
-% -- 4.6 Multi-Maze Generalization ------------------------------------------
-\subsection{Multi-Maze Generalization}
+\begin{table}[ht]
+\centering
+\caption{Adversarial robustness: undefended vs.\ consensus-filtered morphic
+field.  All values are mean evaluation steps post-attack (lower is better).
+``Recovery'' is the percentage improvement from consensus filtering.
+Clean-field baseline: $\approx$265 steps.}
+\label{tab:adversarial}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Attack type} & \textbf{Undefended} & \textbf{Robust} &
+\textbf{Recovery} \\
+\midrule
+Random noise injection & 279.6 & 263.3 &  5.8\% \\
+Degenerate policy      & 264.1 & 263.3 &  0.3\% \\
+Zero-flood attack      & 307.1 & 263.3 & \textbf{14.3\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\textwidth]{../data/results/adversarial_robustness.png}
+\caption{Adversarial robustness experiment.  Zero-flood attacks (injecting
+zero Q-tables with high weight to dilute the field) cause the largest
+degradation and are most effectively blocked by consensus filtering.}
+\label{fig:adversarial}
+\end{figure}
+
+The zero-flood attack is the most damaging: injecting near-zero Q-tables with
+moderate weight dilutes the field, causing a 31-step degradation relative to
+the clean baseline.  The consensus filter completely blocks this, recovering
+14.3\%.  Degenerate always-left policies cause minimal damage because the
+field's existing knowledge is strong enough to dilute a single injection.
+Random noise causes moderate damage (4 steps) and is partially recovered by
+the filter.  The \texttt{RobustMorphicField} maintains consistent $\sim$263
+step performance regardless of attack type.
+
+% -- 4.6 Multi-Maze Generalisation ------------------------------------------
+\subsection{Multi-Maze Generalisation}
 \label{sec:results:multimaze}
 
-We test whether the morphic field captures general maze-solving strategies
-or merely memorizes Q-values for a specific topology.  Two experiments:
-(1)~\emph{Same-size transfer}: build the field on Maze~A (seed=42) and test
-displaced agents on Mazes B, C, D (different seeds, same size);
-(2)~\emph{Cross-maze field}: train across four mazes simultaneously,
-alternating each generation, then test on all four plus a held-out maze.
+We test whether the morphic field captures general maze-solving strategies or
+merely memorises topology-specific Q-values.  All experiments use a $7\times7$
+maze, 40 generations, 20 agents/gen, 100 episodes, seed~=~42.
+Table~\ref{tab:multimaze} presents the results;
+Figure~\ref{fig:multimaze} shows the transfer patterns.
 
-% -- 4.7 Deep RL Extension --------------------------------------------------
-\subsection{Deep RL Extension}
+\begin{table}[ht]
+\centering
+\caption{Multi-maze generalisation.  Experiment~1: field from Maze~42
+(seed=42) tested on transfer mazes.  Experiment~2: cross-maze field trained
+on all four mazes (alternating), tested on training mazes plus a held-out
+maze (seed=999).  Advantage = percentage improvement in displaced Gen\,1 over
+control.}
+\label{tab:multimaze}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+\textbf{Maze seed} & \textbf{Type} & \textbf{Ctrl avg} &
+\textbf{Displaced Gen\,1} & \textbf{Advantage} \\
+\midrule
+\multicolumn{5}{l}{\textit{Experiment 1: single-source transfer}} \\
+ 42 & Train    & 400 & 280 & 30.1\% \\
+123 & Transfer & 400 & 400 &  0.0\% \\
+456 & Transfer & 214 &  36 & \textbf{83.2\%} \\
+789 & Transfer & 400 & 400 &  0.0\% \\
+\midrule
+\multicolumn{5}{l}{\textit{Experiment 2: cross-maze field}} \\
+ 42 & Train   & 400 & 280 & 30.1\% \\
+123 & Train   & 400 & 400 &  0.0\% \\
+456 & Train   & 214 &  36 & 83.2\% \\
+789 & Train   & 400 & 400 &  0.0\% \\
+999 & Holdout & 396 & 365 &  \textbf{7.9\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{../data/results/multi_maze_results.png}
+\caption{Multi-maze generalisation.  Transfer to Maze~456 is dramatic
+(83.2\% advantage), while Mazes~123 and 789 show zero transfer.  The
+cross-maze field gives a modest 7.9\% advantage on the held-out Maze~999.}
+\label{fig:multimaze}
+\end{figure}
+
+Transfer is topology-dependent.  The field from Maze~42 transfers
+dramatically to Maze~456 (83.2\% advantage) but provides no benefit for
+Mazes~123 or 789 --- the Q-values learned on one topology may map to walls in
+another, canceling any benefit.  The cross-maze field gives a modest but
+positive 7.9\% advantage on the completely held-out Maze~999, indicating the
+field does capture some general maze-solving heuristic (e.g., ``move toward
+bottom-right'') beyond topology-specific Q-values.
+
+These results suggest that morphic fields should be maintained per-domain
+rather than globally in practical multi-agent systems.
+
+% -- 4.7 Deep RL Extension ---------------------------------------------------
+\subsection{Deep RL Extension (Proof of Concept)}
 \label{sec:results:deep}
 
-To demonstrate that the morphic field pattern scales beyond tabular
-Q-learning, we implement a numpy-only DQN (2-layer neural network,
-64 hidden units, experience replay) and test the morphic field as
-shared network weight initialization.  The
-\texttt{DeepMorphicField} accumulates and emits network parameters
-($\mathbf{W}_1, \mathbf{b}_1, \mathbf{W}_2, \mathbf{b}_2$) using
-the same performance-weighted absorb/emit cycle.
+To test whether the morphic field pattern scales beyond tabular Q-learning, we
+implement a numpy-only DQN (2-layer neural network, \textbf{16 hidden units},
+experience replay buffer of 2000 transitions, Huber-style error clipping) on a
+$3\times3$ maze.  The \texttt{DeepMorphicField} accumulates and emits network
+parameter dictionaries ($\mathbf{W}_1, \mathbf{b}_1, \mathbf{W}_2,
+\mathbf{b}_2$) using the same performance-weighted absorb/emit cycle.
+Table~\ref{tab:deep} presents the results;
+Figure~\ref{fig:deep} shows the learning curves.
 
+\begin{table}[ht]
+\centering
+\caption{Deep RL extension: numpy DQN on $3\times3$ maze.  10 generations,
+4 agents/gen, 50 episodes, max 100 steps, seed~=~42.}
+\label{tab:deep}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Condition} & \textbf{Gen\,1 (steps)} & \textbf{Gen\,10 (steps)} \\
+\midrule
+DQN Control     & 100 & 100 \\
+DQN Morphic     & 100 & 100 \\
+Displaced Control & 100 & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.75\textwidth]{../data/results/deep_morphic_results.png}
+\caption{Deep RL extension.  All conditions hit the 100-step maximum ---
+the DQN base learner cannot solve even a $3\times3$ maze within the training
+budget.  The null result is expected and informative.}
+\label{fig:deep}
+\end{figure}
+
+All conditions hit the 100-step maximum: the DQN base learner cannot solve
+even the $3\times3$ maze within 50 episodes with 16 hidden units and a 2D
+coordinate state encoding.  The \emph{null result is expected and
+informative}: the morphic field cannot create signal from noise --- it can only
+amplify what agents have already learned.  The performance gate (failed agents
+contribute weight $\approx 0.01$) prevents corruption but cannot generate
+useful signal when the individual learner is too weak.
+
+The \emph{architecture} is sound: \texttt{DeepMorphicField} correctly
+accumulates and emits network parameter matrices, confirming the pattern is
+representation-agnostic.  Production-scale validation requires PyTorch or
+TensorFlow on continuous state spaces with sufficient training budget.
 
 % =============================================================================
 \section{Epistemological Analysis}
@@ -924,10 +1159,10 @@ The simulation demonstrates three things:
           single-generation control baseline).
 
     \item \textbf{Experimental design validation.}  The displaced control test
-          is the most powerful experimental design for detecting morphic
-          resonance.  If fresh, unrelated agents outperform the control
-          baseline on their first generation, something other than genetics
-          or individual learning must be transmitting information.
+          is a powerful experimental design for detecting a non-genetic
+          knowledge transfer mechanism.  Fresh, unrelated agents outperform
+          the control baseline on their first generation if something other
+          than genetics or individual learning is transmitting information.
 \end{enumerate}
 
 \subsection{What the Simulation Does Not Prove}
@@ -948,6 +1183,14 @@ The simulation does \textbf{not} demonstrate:
           --- it is a NumPy array in computer memory.  The simulation shows
           what would happen \emph{if} such a channel existed, not that one
           does.
+
+    \item \textbf{That the displaced control design would be sensitive to the
+          hypothesised physical mechanism.}  The simulation shows the design
+          works when the field is a real data structure.  Whether it would
+          detect Sheldrake's proposed physical mechanism --- which has no
+          specified carrier, no attenuation law, and no known scale --- is
+          entirely undetermined.  The simulation validates the experimental
+          logic, not the physical detectability.
 
     \item \textbf{That Sheldrake's specific mechanism is real.}  The
           simulation implements \emph{a} formalization of morphic resonance,
@@ -979,10 +1222,10 @@ simulation has served its purpose by sharpening the prediction.
 % =============================================================================
 
 Independent of whether morphic resonance exists in nature, the morphic field
-architecture --- performance-weighted absorption, scaled emission, blending
-with local learning --- constitutes a practical design pattern for AI systems.
-This section strips away the Sheldrake framing and examines the engineering
-utility.
+architecture --- performance-weighted absorption, temporal decay, scaled
+emission, blending with local learning --- constitutes a practical design
+pattern for AI systems.  This section strips away the Sheldrake framing and
+examines the engineering utility.
 
 % -- 5.1 Population-Level Experience Replay ----------------------------------
 \subsection{Population-Level Experience Replay}
@@ -990,34 +1233,34 @@ utility.
 
 The morphic field is a population-level experience replay buffer where
 contributions are weighted by success.  Unlike standard experience
-replay~\cite{schaul2015}, which stores individual transitions for a single
+replay~\citep{schaul2015}, which stores individual transitions for a single
 agent, the morphic field operates at the \emph{policy level}: it accumulates
 entire Q-tables, weighted by evaluation performance, and emits a distilled
-initialization for new agents.
+initialisation for new agents.
 
 This is related to but distinct from:
 \begin{itemize}[leftmargin=2em]
-    \item \textbf{Knowledge distillation}~\cite{hinton2015}: compresses many
-          models into one.  The morphic field does not compress --- it
+    \item \textbf{Knowledge distillation}~\citep{hinton2015}: compresses
+          many models into one.  The morphic field does not compress --- it
           accumulates and averages.
-    \item \textbf{Federated learning}~\cite{mcmahan2017}: aggregates local
+    \item \textbf{Federated learning}~\citep{mcmahan2017}: aggregates local
           updates into a global model.  The morphic field is structurally
-          similar, but asymmetric --- performance weighting means not all
+          similar, but performance weighting makes it asymmetric --- not all
           agents contribute equally.
-    \item \textbf{Population-based training}~\cite{jaderberg2017}: evolves
+    \item \textbf{Population-based training}~\citep{jaderberg2017}: evolves
           hyperparameters across a population.  The morphic field evolves
-          policies, not hyperparameters, and includes non-elite contributors
-          (at reduced weight).
+          policy initialisation, not hyperparameters, and includes non-elite
+          contributors (at reduced weight).
 \end{itemize}
 
 % -- 5.2 Cold-Start Mitigation -----------------------------------------------
 \subsection{Cold-Start Mitigation}
 \label{sec:applications:coldstart}
 
-The displaced control result --- fresh agents immediately performing 26\%
-better --- is a direct solution to the \emph{cold-start problem}.  A new agent
-spins up with no history but benefits from a collective memory accumulated by
-all prior agents.
+The displaced control result --- fresh agents scoring 26\% better on their
+first generation in a mature field --- is a direct demonstration of cold-start
+mitigation.  A new agent spins up with no history but benefits from collective
+memory accumulated by all prior agents.
 
 Applications include:
 \begin{itemize}[leftmargin=2em]
@@ -1026,40 +1269,33 @@ Applications include:
     \item \textbf{Recovery after failure}: a crashed agent's replacement
           inherits the field immediately.
     \item \textbf{Cross-task transfer}: the field serves as a domain prior
-          (rather than task-specific weights) that gives new agents a head
-          start on related problems.
+          that gives new agents a head start on related problems
+          (see multi-maze generalisation, Section~\ref{sec:results:multimaze}).
 \end{itemize}
 
 % -- 5.3 Stigmergic Coordination ---------------------------------------------
 \subsection{Stigmergic Coordination}
 \label{sec:applications:stigmergy}
 
-The morphic field is a form of \emph{stigmergy}~\cite{grasse1959} --- agents
+The morphic field is a form of \emph{stigmergy}~\citep{grasse1959} --- agents
 coordinate through a shared environment rather than direct communication.
-This is the same principle by which ant colonies optimize
-paths~\cite{dorigo1996}, Wikipedia edits accumulate knowledge, and git
+This is the same principle by which ant colonies optimise
+paths~\citep{dorigo1996}, Wikipedia edits accumulate knowledge, and git
 repositories coordinate distributed development.
 
-Stigmergic architectures scale better than peer-to-peer messaging because:
-(A)~agents do not need to know about each other; (B)~the shared medium
-naturally aggregates and attenuates information; (C)~new agents benefit
-immediately without explicit onboarding.
-
 \paragraph{Connection to GraphPalace.}
-The GraphPalace stigmergic memory engine~\cite{graphpalace2026} uses five-type
-pheromone trails for memory retrieval: success, traversal, recency,
+The GraphPalace stigmergic memory engine~\citep{graphpalace2026} uses
+five-type pheromone trails for memory retrieval: success, traversal, recency,
 exploitation, and exploration pheromones accumulate on graph edges to create
 living retrieval landscapes.  The morphic field implements the same principle
 in Q-table space: agents deposit performance-weighted Q-values and withdraw
-scaled priors.  A natural extension would apply morphic field architecture to
-GraphPalace's embedding space, creating a ``learning palace'' where the memory
-system itself improves from the agents that use it.
+scaled priors.
 
 % -- 5.4 Design Pattern Summary ----------------------------------------------
 \subsection{Summary: The Morphic Field as a Design Pattern}
 \label{sec:applications:summary}
 
-Table~\ref{tab:pattern} summarizes the morphic field as a reusable
+Table~\ref{tab:pattern} summarises the morphic field as a reusable
 architecture.
 
 \begin{table}[ht]
@@ -1075,7 +1311,9 @@ Shared medium    & Accumulated representation (Q-table, embedding, weight
 Absorb           & Performance-weighted deposit after each agent's evaluation \\
 Emit             & Scaled prior for new agents (strength parameter controls
                    influence) \\
-Blend            & Combination with local/genetic initialization (tunable
+Decay            & Exponential forgetting of stale contributions ($\rho =
+                   0.005$--$0.01$ optimal) \\
+Blend            & Combination with local/genetic initialisation (tunable
                    ratio) \\
 Performance gate & Failed agents contribute near-zero; solvers contribute
                    proportionally \\
@@ -1086,14 +1324,9 @@ No identity      & The field does not track individual contributors --- only
 \end{table}
 
 The pattern is agnostic to the representation space.  The simulation uses
-flat Q-tables; the same absorb/emit/blend cycle could operate on:
-\begin{itemize}[leftmargin=2em]
-    \item Neural network weight matrices (deep RL agents)
-    \item Embedding vectors (semantic memory systems like GraphPalace)
-    \item Tool-use strategy distributions (LLM agent systems)
-    \item Hierarchical fields (different fields for different skill levels,
-          mapping to GraphPalace's wing/room/drawer hierarchy)
-\end{itemize}
+flat Q-tables; the same absorb/emit/blend/decay cycle could operate on
+neural network weight matrices, semantic embedding vectors, or tool-use
+strategy distributions in LLM agent systems.
 
 
 % =============================================================================
@@ -1105,32 +1338,48 @@ flat Q-tables; the same absorb/emit/blend cycle could operate on:
 \label{sec:discussion:limitations}
 
 \begin{enumerate}[leftmargin=2em]
-    \item \textbf{Scale.}  While the deep RL extension
-          (Section~\ref{sec:results:deep}) demonstrates the pattern scales
-          beyond tabular Q-learning, it uses a small numpy-only DQN.
-          Production validation with PyTorch/TensorFlow on continuous
-          state spaces remains future work.
+    \item \textbf{Single seed.}  All primary results use seed = 42.  The
+          morphic-only condition is noisy; the true variance of the 39\%
+          improvement is unknown.  Multi-seed analysis with bootstrap
+          confidence intervals is an immediate priority
+          (Section~\ref{sec:discussion:future}).
 
-    \item \textbf{Morphic-only noise.}  The morphic-only condition is noisy
-          (39\% improvement vs.\ 86\% for genetic).  Performance-weighted
-          averaging is a blunt aggregation mechanism compared to elite
-          selection with crossover.
+    \item \textbf{Biological modelling.}  Tabular Q-learning is a deeply
+          impoverished model of mammalian maze learning.  Rats use allocentric
+          spatial maps (hippocampal place cells), goal-directed and habitual
+          systems (prefrontal--striatal circuits), and social transmission of
+          foraging strategies via olfactory cues --- none of which are
+          captured here.  The mapping from Q-learning to animal learning is
+          loose at best.  The concern is not merely about realism: Sheldrake's
+          proposed mechanism of resonance between structurally similar nervous
+          systems depends on details of biological memory encoding that this
+          simulation does not model at any level.  The simulation is an
+          engineering analogy, not a biological model.
 
-    \item \textbf{No real biology.}  The simulation models artificial agents,
-          not rats.  The mapping from Q-learning to animal learning is
-          loose at best, though Levin's bioelectric field
-          work~\cite{levin2025} provides a biological bridge.
+    \item \textbf{Performance weighting and biological fidelity.}
+          The performance weight $w_i = \text{max\_steps}/\text{eval\_steps}$
+          rewards fast solvers and rapidly concentrates the field toward
+          near-optimal trajectories --- making it functionally closer to a
+          best-solution cache than to any plausible biological collective
+          memory.  Biological morphic resonance, if it existed, would
+          presumably accumulate from all members of a species, not
+          preferentially from the fastest performers.  This design choice
+          optimises for engineering utility at the cost of biological fidelity.
+
+    \item \textbf{No head-to-head FedRL comparison.}  The claim that the
+          morphic field occupies a specific gap between SUPER and FedAvg
+          is a hypothesis, not yet an empirical result.  Direct benchmarking
+          on standardised cooperative tasks is future work.
+
+    \item \textbf{Scale.}  The deep RL extension uses a minimal numpy-only
+          DQN that cannot solve even a $3\times3$ maze.  Production
+          validation with PyTorch/TensorFlow on continuous state spaces
+          remains future work.
 
     \item \textbf{Sheldrake's mechanism is unspecified.}  Our formalization
           (shared Q-table) is one of many possible implementations.
           Sheldrake does not specify the mathematical structure of morphic
           fields, so our results are specific to this formalization.
-
-    \item \textbf{Single seed.}  Primary results are from a single random
-          seed.  The multi-maze experiments
-          (Section~\ref{sec:results:multimaze}) test across topologies,
-          but a full study would require multiple seeds with bootstrap
-          confidence intervals.
 \end{enumerate}
 
 \subsection{Criticisms of Morphic Resonance}
@@ -1142,36 +1391,44 @@ hypothesis, which our simulation does not address:
 \begin{enumerate}[leftmargin=2em]
     \item \textbf{No known mechanism}: the hypothesis posits influence across
           time and space without an energetic carrier or physical
-          mechanism~\cite{rose2006}.
+          mechanism~\citep{rose2006}.
     \item \textbf{Violates established physics}: implies non-local causation
           without known fields, contradicting the standard model.
     \item \textbf{Unfalsifiable boundaries}: critics argue the hypothesis
           can always be adjusted to accommodate negative
-          results~\cite{maddox1981}.
+          results~\citep{maddox1981}.
     \item \textbf{Alternative explanations}: genetic drift, methodological
           artifacts, and publication bias can explain the cited experimental
-          results without invoking new physics.
+          results without invoking new physics.  The Edinburgh and Melbourne
+          researchers who ran the Agar--Crew replication attributed both
+          lines' improvement to accumulated methodological drift --- the
+          mainstream scientific interpretation.
 \end{enumerate}
 
 \subsection{Future Work}
 \label{sec:discussion:future}
 
 \begin{enumerate}[leftmargin=2em]
+    \item \textbf{Multi-seed statistical analysis (immediate priority)}: run
+          all conditions across 30--50 seeds; report mean, standard deviation,
+          and 95\% bootstrap confidence intervals.  This is a prerequisite for
+          any further submission revision.
+    \item \textbf{Head-to-head FedRL benchmarks}: compare the morphic field
+          directly against FedAvg~\citep{mcmahan2017},
+          FEDORA~\citep{che2023}, and SUPER~\citep{gerstgrasser2023} on
+          identical cooperative tasks with identical compute budgets.
     \item \textbf{Production-scale deep RL}: extend the numpy DQN proof of
           concept to PyTorch/TensorFlow on continuous state spaces
-          (Atari, MuJoCo) with proper target networks and prioritized replay.
+          (Atari, MuJoCo) with proper target networks and prioritised replay.
     \item \textbf{Embedding-space fields}: implement the absorb/emit/blend
-          pattern in vector embedding space (e.g., within GraphPalace) to
-          create stigmergic memory systems that improve from agent usage.
-    \item \textbf{Multi-seed statistical analysis}: run all conditions across
-          50+ seeds with bootstrap confidence intervals.
-    \item \textbf{Head-to-head FedRL comparison}: benchmark morphic field
-          directly against FedAvg~\cite{mcmahan2017},
-          FEDORA~\cite{che2023}, and SUPER~\cite{gerstgrasser2023} on
-          identical cooperative tasks with identical compute budgets.
+          pattern in vector embedding space within GraphPalace to create
+          stigmergic memory systems that improve from agent usage.
     \item \textbf{LLM agent fields}: apply the morphic field pattern to
-          LLM tool-use strategy distributions, where agents share
-          accumulated knowledge about which tools to invoke for which tasks.
+          LLM tool-use strategy distributions, where agents share accumulated
+          knowledge about which tools to invoke for which tasks.
+    \item \textbf{Heterogeneous field composition}: test morphic fields across
+          agents with different state spaces, different maze sizes, or
+          different task formulations.
 \end{enumerate}
 
 
@@ -1183,7 +1440,7 @@ hypothesis, which our simulation does not address:
 We have presented a computational model of Sheldrake's morphic resonance
 hypothesis, implemented as a multi-agent Q-learning simulation of the
 McDougall rat maze experiment, and extended it across five additional
-experimental axes.  The key findings:
+experimental axes with full quantitative reporting.  The key findings:
 
 \begin{enumerate}[leftmargin=2em]
     \item A morphic field, formalized as a performance-weighted shared Q-table,
@@ -1191,163 +1448,201 @@ experimental axes.  The key findings:
           channel (39\% improvement over 60~generations in the morphic-only
           condition).
     \item The displaced control test produces a distinctive signature: fresh
-          agents with zero ancestry immediately outperform the control
-          baseline by 26\%, benefiting purely from the accumulated collective
-          habit.
-    \item Temporal decay ($\rho = 0.01$--$0.02$) improves field quality
-          by preventing stale knowledge from dominating --- a mechanism
-          absent from all existing FedRL methods.
-    \item The morphic field exhibits population-dependent effectiveness,
-          with a clear threshold below which the field fails to form
-          coherent knowledge.
+          agents with zero ancestry score 297~steps on their first generation
+          (26\% advantage over the 400-step control baseline), benefiting
+          purely from the accumulated collective habit.
+    \item Temporal decay $\rho = 0.005$--$0.01$ improves the displaced control
+          advantage from 25.8\% to 34.4\% --- a 33\% relative improvement ---
+          by preventing stale knowledge from dominating.  This decay mechanism
+          is absent from all surveyed federated RL methods and represents a
+          novel differentiator.
+    \item The morphic field exhibits population-dependent effectiveness, with
+          a clear minimum threshold at $P = 2$ (zero benefit) and peak
+          effectiveness at $P = 10$ (51.6\% advantage), showing a gradual
+          rather than sharp phase transition.
     \item Consensus filtering provides robustness against adversarial
-          Q-value injection, with up to 14\% recovery against zero-flood
+          Q-value injection, with up to 14.3\% recovery against zero-flood
           attacks.
-    \item The morphic field architecture extends to neural Q-networks and
-          transfers partially across maze topologies, demonstrating
-          generality beyond the tabular setting.
+    \item The morphic field transfers partially across maze topologies
+          (7.9\% holdout advantage with a cross-maze field) and the
+          absorb/emit/blend architecture generalises to neural network weight
+          matrices, though effective deep RL validation awaits a stronger
+          base learner.
 \end{enumerate}
 
-The hypothesis is formally coherent, the predicted data pattern is distinctive
-and detectable, and the displaced control constitutes a viable experimental
-design.  The simulation does not prove that morphic resonance exists in
-nature --- it is a computational thought experiment that makes the hypothesis
-precise enough to test empirically.
+The simulation does not prove that morphic resonance exists in nature.  It is
+a computational thought experiment that makes the hypothesis precise enough to
+test empirically.  Single-seed results limit the current statistical claims;
+multi-seed analysis is the immediate priority before formal submission.
 
-The engineering contribution stands independently.  The morphic field
-pattern --- value-function-level sharing with performance weighting,
-temporal decay, and consensus filtering --- occupies a specific gap between
+The engineering contribution stands independently.  The morphic field pattern
+--- value-function-level sharing with performance weighting, temporal decay,
+and consensus filtering --- occupies a specific gap between
 experience-sharing (SUPER) and weight-sharing (FedAvg) in the multi-agent
-knowledge transfer spectrum.  The insight that learning should not die with
-the agent --- that collective memory can be infrastructure --- provides a
+knowledge transfer spectrum.  The insight that \emph{learning should not die
+with the agent} --- that collective memory can be infrastructure --- provides a
 clean, minimal implementation with a direct path from biological inspiration
 to practical multi-agent architecture.
 
 \vspace{1em}
-\noindent\textbf{Code availability.}
-The simulation code, experiment scripts, and paper source are available at
+\noindent\textbf{Code and data availability.}
+The simulation code, all experiment scripts, result data, and paper source
+are available at
 \url{https://github.com/web3guru888/morphic-resonance-sim}.
-Dependencies: Python~3, NumPy, Matplotlib.
+Dependencies: Python~3, NumPy, Matplotlib.  All figures are reproducible
+by running the scripts in \texttt{simulation/}.
 
 % =============================================================================
 % Bibliography
 % =============================================================================
 
+\bibliographystyle{apalike}
 \begin{thebibliography}{99}
 
-\bibitem{sheldrake1981}
-R.~Sheldrake, \emph{A New Science of Life: The Hypothesis of Formative
-Causation}. London: Blond and Briggs, 1981.
+\bibitem[Agar et~al.(1954)]{agar1954}
+Agar, W.~E., Drummond, F.~H., Tiegs, O.~W., \& Gunson, M.~M. (1954).
+Fourth (final) report on a test of McDougall's Lamarckian experiment on the
+training of rats.
+\textit{Journal of Experimental Biology}, \textit{31}, 307--321.
 
-\bibitem{sheldrake1988}
-R.~Sheldrake, \emph{The Presence of the Past: Morphic Resonance and the
-Habits of Nature}. London: Collins, 1988.
+\bibitem[Bohm(1980)]{bohm1980}
+Bohm, D. (1980).
+\textit{Wholeness and the Implicate Order}.
+Routledge.
 
-\bibitem{sheldrake2012}
-R.~Sheldrake, \emph{The Science Delusion}. London: Coronet, 2012.
-(US title: \emph{Science Set Free}.)
+\bibitem[Che et~al.(2023)]{che2023}
+Che, J., Bedi, M., \& Koppel, A. (2023).
+FEDORA: Federated reinforcement learning with online aggregation.
+arXiv:2312.05035.
 
-\bibitem{maddox1981}
-J.~Maddox, ``A book for burning?'' \emph{Nature}, vol.~293, pp.~245--246,
-1981.
+\bibitem[Colwell et~al.(2000)]{colwell2000}
+Colwell, J., Schr\"{o}der, S., \& Sladen, D. (2000).
+The ability to detect unseen staring: A literature review and empirical tests.
+\textit{British Journal of Psychology}, \textit{91}, 71--85.
 
-\bibitem{mcdougall1938}
-W.~McDougall, ``Fourth report on a Lamarckian experiment,'' \emph{British
-Journal of Psychology}, vol.~28, pp.~321--345, 1938.
+\bibitem[Cook et~al.(2024)]{cook2024}
+Cook, T., Lu, S., Grefenstette, E., \& Foerster, J. (2024).
+Artificial generational intelligence: Cultural accumulation in reinforcement
+learning.
+arXiv:2406.00392.
 
-\bibitem{agar1954}
-W.~E.~Agar, F.~H.~Drummond, O.~W.~Tiegs, and M.~M.~Gunson, ``Fourth (final)
-report on a test of McDougall's Lamarckian experiment on the training of
-rats,'' \emph{Journal of Experimental Biology}, vol.~31, pp.~307--321, 1954.
+\bibitem[Dorigo et~al.(1996)]{dorigo1996}
+Dorigo, M., Maniezzo, V., \& Colorni, A. (1996).
+Ant system: Optimization by a colony of cooperating agents.
+\textit{IEEE Transactions on Systems, Man, and Cybernetics---Part~B},
+\textit{26}(1), 29--41.
 
-\bibitem{koestler1967}
-A.~Koestler, \emph{The Ghost in the Machine}. London: Hutchinson, 1967.
+\bibitem[Gerstgrasser et~al.(2023)]{gerstgrasser2023}
+Gerstgrasser, M., Danino, T., \& Koenig, S. (2023).
+SUPER: Sharing useful partial experiences in multi-agent reinforcement
+learning.
+In \textit{Advances in Neural Information Processing Systems} (NeurIPS 2023).
 
-\bibitem{colwell2000}
-J.~Colwell, S.~Schr\"{o}der, and D.~Sladen, ``The ability to detect unseen
-staring: A literature review and empirical tests,'' \emph{British Journal of
-Psychology}, vol.~91, pp.~71--85, 2000.
-
-\bibitem{whitehead1929}
-A.~N.~Whitehead, \emph{Process and Reality}. New York: Macmillan, 1929.
-
-\bibitem{bohm1980}
-D.~Bohm, \emph{Wholeness and the Implicate Order}. London: Routledge, 1980.
-
-\bibitem{jung1959}
-C.~G.~Jung, \emph{The Archetypes and the Collective Unconscious}, Collected
-Works, vol.~9, part~1. Princeton: Princeton University Press, 1959.
-
-\bibitem{schaul2015}
-T.~Schaul, J.~Quan, I.~Antonoglou, and D.~Silver, ``Prioritized experience
-replay,'' in \emph{Proc.\ ICLR}, 2016.
-
-\bibitem{hinton2015}
-G.~Hinton, O.~Vinyals, and J.~Dean, ``Distilling the knowledge in a neural
-network,'' in \emph{NIPS Deep Learning Workshop}, 2015.
-
-\bibitem{jaderberg2017}
-M.~Jaderberg, V.~Dalibard, S.~Osindero, W.~K.~Czarnecki, J.~Donahue,
-A.~Razavi, O.~Vinyals, T.~Green, I.~Dunning, K.~Simonyan, C.~Fernando,
-and K.~Kavukcuoglu, ``Population based training of neural networks,''
-\emph{arXiv:1711.09846}, 2017.
-
-\bibitem{mcmahan2017}
-H.~B.~McMahan, E.~Moore, D.~Ramage, S.~Hampson, and B.~A.~y~Arcas,
-``Communication-efficient learning of deep networks from decentralized data,''
-in \emph{Proc.\ AISTATS}, 2017.
-
-\bibitem{grasse1959}
-P.-P.~Grass\'{e}, ``La reconstruction du nid et les coordinations
-interindividuelles chez \emph{Bellicositermes natalensis} et
-\emph{Cubitermes} sp.,'' \emph{Insectes Sociaux}, vol.~6, pp.~41--80, 1959.
-
-\bibitem{dorigo1996}
-M.~Dorigo, V.~Maniezzo, and A.~Colorni, ``Ant system: Optimization by a
-colony of cooperating agents,'' \emph{IEEE Trans.\ Systems, Man, and
-Cybernetics---Part B}, vol.~26, no.~1, pp.~29--41, 1996.
-
-\bibitem{graphpalace2026}
-web3guru888, ``GraphPalace: A stigmergic memory palace engine for AI agents,''
-Technical Report, April 2026.
+\bibitem[GraphPalace(2026)]{graphpalace2026}
+web3guru888. (2026).
+\textit{GraphPalace: A stigmergic memory palace engine for AI agents}
+[Technical report].
 \url{https://github.com/web3guru888/GraphPalace}
 
-\bibitem{rose2006}
-S.~Rose, \emph{The 21st-Century Brain: Explaining, Mending and Manipulating
-the Mind}. London: Vintage, 2006.
+\bibitem[Grass\'{e}(1959)]{grasse1959}
+Grass\'{e}, P.-P. (1959).
+La reconstruction du nid et les coordinations interindividuelles chez
+\textit{Bellicositermes natalensis} et \textit{Cubitermes} sp.
+\textit{Insectes Sociaux}, \textit{6}, 41--80.
 
-\bibitem{cook2024}
-T.~Cook, S.~Lu, E.~Grefenstette, and J.~Foerster, ``Artificial generational
-intelligence: Cultural accumulation in reinforcement learning,''
-\emph{arXiv:2406.00392}, 2024.
+\bibitem[Hinton et~al.(2015)]{hinton2015}
+Hinton, G., Vinyals, O., \& Dean, J. (2015).
+Distilling the knowledge in a neural network.
+In \textit{NIPS 2015 Deep Learning Workshop}.
 
-\bibitem{gerstgrasser2023}
-M.~Gerstgrasser, T.~Danino, and S.~Koenig, ``SUPER: Sharing useful
-partial experiences in multi-agent reinforcement learning,'' in
-\emph{Proc.\ NeurIPS}, 2023.
+\bibitem[Hitchman et~al.(2023)]{hitchman2023}
+Hitchman, G., Roe, C., \& Sherwood, S. (2023).
+Revisiting Sheldrake's theory of morphic resonance: An empirical test using
+Chinese symbol recognition.
+\textit{Journal of Scientific Exploration}, \textit{37}(1), 21--44.
 
-\bibitem{pourchot2019}
-A.~Pourchot and O.~Sigaud, ``CEM-RL: Combining evolutionary and
-gradient-based methods for policy search,'' in \emph{Proc.\ ICLR}, 2019.
+\bibitem[Jaderberg et~al.(2017)]{jaderberg2017}
+Jaderberg, M., Dalibard, V., Osindero, S., Czarnecki, W.~K., Donahue, J.,
+Razavi, A., Vinyals, O., Green, T., Dunning, I., Simonyan, K., Fernando, C.,
+\& Kavukcuoglu, K. (2017).
+Population based training of neural networks.
+arXiv:1711.09846.
 
-\bibitem{che2023}
-J.~Che, M.~Bedi, and A.~Koppel, ``FEDORA: Federated reinforcement
-learning with online aggregation,'' \emph{arXiv:2312.05035}, 2023.
+\bibitem[Jung(1959)]{jung1959}
+Jung, C.~G. (1959).
+\textit{The Archetypes and the Collective Unconscious}
+(Collected Works, Vol.~9, Part~1).
+Princeton University Press.
 
-\bibitem{levin2025}
-M.~Levin, ``The multiscale wisdom of the body,'' \emph{BioEssays}, 2025.
+\bibitem[Khushiyant(2025)]{khushiyant2025}
+Khushiyant. (2025).
+Emergent collective memory in stigmergic systems.
+arXiv:2512.10166. [Unreviewed preprint; results cited as preliminary.]
 
-\bibitem{manicka2025}
-S.~Manicka and M.~Levin, ``Field-mediated bioelectric basis of morphogenetic
-prepatterning,'' \emph{bioRxiv}, 2025.
+\bibitem[Koestler(1967)]{koestler1967}
+Koestler, A. (1967).
+\textit{The Ghost in the Machine}.
+Hutchinson.
 
-\bibitem{friston2010}
-K.~Friston, ``The free-energy principle: A unified brain theory?''
-\emph{Nature Reviews Neuroscience}, vol.~11, pp.~127--138, 2010.
+\bibitem[Levin(2025)]{levin2025}
+Levin, M. (2025).
+The multiscale wisdom of the body.
+\textit{BioEssays}.
 
-\bibitem{khushiyant2025}
-Khushiyant, ``Emergent collective memory in stigmergic systems,''
-\emph{arXiv:2512.10166}, 2025.
+\bibitem[Maddox(1981)]{maddox1981}
+Maddox, J. (1981).
+A book for burning?
+\textit{Nature}, \textit{293}, 245--246.
+
+\bibitem[Manicka \& Levin(2025)]{manicka2025}
+Manicka, S., \& Levin, M. (2025).
+Field-mediated bioelectric basis of morphogenetic prepatterning.
+\textit{bioRxiv}.
+
+\bibitem[McDougall(1938)]{mcdougall1938}
+McDougall, W. (1938).
+Fourth report on a Lamarckian experiment.
+\textit{British Journal of Psychology}, \textit{28}, 321--345.
+
+\bibitem[McMahan et~al.(2017)]{mcmahan2017}
+McMahan, H.~B., Moore, E., Ramage, D., Hampson, S., \& y~Arcas, B.~A. (2017).
+Communication-efficient learning of deep networks from decentralized data.
+In \textit{Proceedings of AISTATS 2017}.
+
+\bibitem[Pourchot \& Sigaud(2019)]{pourchot2019}
+Pourchot, A., \& Sigaud, O. (2019).
+CEM-RL: Combining evolutionary and gradient-based methods for policy search.
+In \textit{Proceedings of ICLR 2019}.
+
+\bibitem[Rose(2006)]{rose2006}
+Rose, S. (2006).
+\textit{The 21st-Century Brain: Explaining, Mending and Manipulating the Mind}.
+Vintage.
+
+\bibitem[Schaul et~al.(2015)]{schaul2015}
+Schaul, T., Quan, J., Antonoglou, I., \& Silver, D. (2015).
+Prioritized experience replay.
+In \textit{Proceedings of ICLR 2016}.
+
+\bibitem[Sheldrake(1981)]{sheldrake1981}
+Sheldrake, R. (1981).
+\textit{A New Science of Life: The Hypothesis of Formative Causation}.
+Blond and Briggs.
+
+\bibitem[Sheldrake(1988)]{sheldrake1988}
+Sheldrake, R. (1988).
+\textit{The Presence of the Past: Morphic Resonance and the Habits of Nature}.
+Collins.
+
+\bibitem[Sheldrake(2012)]{sheldrake2012}
+Sheldrake, R. (2012).
+\textit{The Science Delusion}.
+Coronet. [US title: \textit{Science Set Free}.]
+
+\bibitem[Whitehead(1929)]{whitehead1929}
+Whitehead, A.~N. (1929).
+\textit{Process and Reality}.
+Macmillan.
 
 \end{thebibliography}
 
